@@ -131,7 +131,7 @@ class SmartBot:
             
             # Arbitrage opportunity exists when best_buy > best_sell
             # (someone is willing to buy at a higher price than someone is willing to sell)
-            if best_buy_price > best_sell_price:
+            if best_buy_price > best_sell_price and best_sell_price > 0:
                 profit_margin = (best_buy_price - best_sell_price) / best_sell_price
                 if profit_margin > Decimal('0.02'):  # More than 2% profit
                     return {
