@@ -126,11 +126,14 @@ class SmartBot:
 
             if not buy_orders or not sell_orders:
                 continue
-            best_buy_price = max(buy_orders)
-            best_sell_price = min(sell_orders)
-            spread = best_sell_price - best_buy_price
-            if spread > 0:
-                if (spread / best_buy_price) > 0.02:
+            best_buy_price = max(buy_orders)  # Highest buy order (what buyers will pay)
+            best_sell_price = min(sell_orders)  # Lowest sell order (what sellers will accept)
+            
+            # Arbitrage opportunity exists when best_buy > best_sell
+            # (someone is willing to buy at a higher price than someone is willing to sell)
+            if best_buy_price > best_sell_price:
+                profit_margin = (best_buy_price - best_sell_price) / best_sell_price
+                if profit_margin > Decimal('0.02'):  # More than 2% profit
                     return {
                         'pair_id': pair_id,
                         'best_buy': best_buy_price,
