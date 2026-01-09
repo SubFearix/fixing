@@ -64,11 +64,16 @@ class SmartRobot:
                 self.lot_id_to_name[lot['lot_id']] = lot['name']
                 self.name_to_lot_id[lot['name']] = lot['lot_id']
             
-            # Find RUB lot ID
+            # Find RUB lot ID - assume first lot is RUB if not found by name
             if 'RUB' in self.name_to_lot_id:
                 self.rub_lot_id = self.name_to_lot_id['RUB']
+            elif self.lots:
+                # Fallback: use first lot as RUB
+                self.rub_lot_id = self.lots[0]['lot_id']
+                print(f"Warning: RUB lot not found by name, using lot_id={self.rub_lot_id}")
             
             print(f"Loaded {len(self.lots)} lots: {self.lot_id_to_name}")
+            print(f"RUB lot ID: {self.rub_lot_id}")
             return True
         else:
             print(f"Error fetching lots: {data}")
@@ -109,6 +114,9 @@ class SmartRobot:
     def get_rub_balance(self):
         """Get RUB balance."""
         balance_dict = self.get_balance_dict()
+        if self.rub_lot_id is None:
+            # Return 0 if RUB lot not configured
+            return Decimal('0')
         return balance_dict.get(self.rub_lot_id, Decimal('0'))
     
     def get_orders(self):
