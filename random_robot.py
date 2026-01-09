@@ -16,10 +16,15 @@ class RandomBot:
 
     def get_user_id(self):
         if self.user_id is None:
-            response = requests.get(f'{self.api_url}/user/me', headers=self.headers)
-            if response.status_code == 200:
-                data = response.json()
-                self.user_id = data.get('user_id')
+            try:
+                response = requests.get(f'{self.api_url}/user/me', headers=self.headers)
+                if response.status_code == 200:
+                    data = response.json()
+                    self.user_id = data.get('user_id')
+                else:
+                    print(f"Ошибка получения user_id: статус {response.status_code}")
+            except Exception as e:
+                print(f"Ошибка при запросе user_id: {e}")
         return self.user_id
 
     def get_balance(self):
