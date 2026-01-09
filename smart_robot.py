@@ -12,10 +12,15 @@ from collections import defaultdict
 
 
 class SmartRobot:
+    # Price thresholds for trading decisions
+    CHEAP_PRICE_THRESHOLD = 0.8   # Buy if price is below this
+    HIGH_PRICE_THRESHOLD = 1.5    # Sell if price is above this
+    SPREAD_THRESHOLD = 0.05       # Minimum spread percentage to trade
+    TREND_THRESHOLD = 0.02        # Minimum trend to act on
+    
     def __init__(self, base_url, username=None):
         self.base_url = base_url.rstrip('/')
         self.user_key = None
-        self.user_id = None
         self.username = username or "smart_robot"
         self.pairs = []
         self.lots = []
@@ -24,7 +29,6 @@ class SmartRobot:
         self.pair_info = {}  # pair_id -> {sale_lot_id, buy_lot_id}
         self.rub_lot_id = None
         self.price_history = defaultdict(list)  # pair_id -> list of prices
-        self.my_open_orders = []
         
     def create_user(self):
         """Create a new user for the robot."""
@@ -232,8 +236,8 @@ class SmartRobot:
             if data['best_bid'] and data['best_ask'] and data['spread']:
                 spread_percent = data['spread'] / data['best_ask'] if data['best_ask'] else 0
                 
-                # If spread is significant (> 5%), try to capture it
-                if spread_percent > 0.05:
+                # If spread is significant, try to capture it
+                if spread_percent > self.SPREAD_THRESHOLD:
                     # Place buy order slightly above best bid
                     my_bid = round(data['best_bid'] * 1.01, 4)  # 1% above best bid
                     
@@ -286,7 +290,7 @@ class SmartRobot:
             # If pair is X/RUB (selling X for RUB)
             if buy_lot == self.rub_lot_id:
                 # Trend is up - sell crypto for RUB at good price
-                if trend > 0.02 and balance.get(sale_lot, Decimal('0')) >= Decimal('1'):
+                if trend > self.TREND_THRESHOLD and balance.get(sale_lot, Decimal('0')) >= Decimal('1'):
                     sell_price = round(current_price * 1.02, 4)
                     result = self.place_order(pair_id, 1.0, sell_price, 'sell')
                     print(f"[SMART-TREND] SELL (rising) pair={pair_id} qty=1 price={sell_price} -> {result}")
@@ -295,7 +299,7 @@ class SmartRobot:
             # If pair is RUB/X (buying X with RUB)
             if sale_lot == self.rub_lot_id:
                 # Trend is down - buy cheap crypto to sell later
-                if trend < -0.02:
+                if trend < -self.TREND_THRESHOLD:
                     rub_balance = balance.get(self.rub_lot_id, Decimal('0'))
                     buy_price = round(current_price * 0.98, 4)
                     cost = Decimal(str(buy_price))
@@ -323,7 +327,7 @@ class SmartRobot:
             # Look for very cheap sell orders (random robot might place these)
             for sell_order in data.get('sell_orders', []):
                 # If price is very low, buy it!
-                if sell_order['price'] < 0.8:  # Price below 0.8 is considered cheap
+                if sell_order['price'] < self.CHEAP_PRICE_THRESHOLD:
                     cost = Decimal(str(sell_order['price'])) * Decimal(str(sell_order['quantity']))
                     if balance.get(buy_lot, Decimal('0')) >= cost:
                         result = self.place_order(
@@ -339,7 +343,7 @@ class SmartRobot:
             # Look for very expensive buy orders (random robot might place these)
             for buy_order in data.get('buy_orders', []):
                 # If price is very high, sell to them!
-                if buy_order['price'] > 1.5:  # Price above 1.5 is considered high
+                if buy_order['price'] > self.HIGH_PRICE_THRESHOLD:
                     if balance.get(sale_lot, Decimal('0')) >= Decimal(str(buy_order['quantity'])):
                         result = self.place_order(
                             pair_id,
@@ -352,20 +356,6 @@ class SmartRobot:
                         break
         
         return actions_taken
-    
-    def cleanup_old_orders(self):
-        """Cancel orders that have been sitting too long."""
-        orders = self.get_orders()
-        
-        # Find our open orders
-        for order in orders:
-            if not order.get('closed') and order.get('user_id') == self.user_id:
-                # Cancel it to free up balance
-                try:
-                    self.delete_order(order['order_id'])
-                    print(f"[SMART] Cancelled old order {order['order_id']}")
-                except Exception as e:
-                    pass  # Ignore errors
     
     def run_iteration(self):
         """Run one iteration of the smart trading algorithm."""
