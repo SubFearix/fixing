@@ -168,17 +168,6 @@ def get_balance():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-@app.route('/user/me', methods=['GET'])
-def get_current_user():
-    try:
-        user, error, status = get_user_from_request()
-        if error:
-            return jsonify(error), status
-        return jsonify({"user_id": int(user['user_pk'])})
-
-    except Exception as e:
-        return jsonify({"error": str(e)})
-
 if __name__ == '__main__':
     print("Starting Exchange API Server...")
     print(f"Lots: {config['lots']}")

@@ -16,20 +16,6 @@ class SmartBot:
         self.pairs = {}
         self.initial_balance = None
         self.trades_count = 0
-        self.user_id = None
-
-    def get_user_id(self):
-        if self.user_id is None:
-            try:
-                response = requests.get(f'{self.api_url}/user/me', headers=self.headers)
-                if response.status_code == 200:
-                    data = response.json()
-                    self.user_id = data.get('user_id')
-                else:
-                    print(f"Ошибка получения user_id: статус {response.status_code}")
-            except Exception as e:
-                print(f"Ошибка при запросе user_id: {e}")
-        return self.user_id
 
     def initialize(self):
         print("Инициализация робота...")
@@ -131,10 +117,7 @@ class SmartBot:
         print(f"DEBUG: Всего ордеров в базе: {len(orders)}. Пример ключей: {orders[0].keys() if orders else 'пусто'}")
         if not orders:
             return None
-        
-        user_id = self.get_user_id()
-        # Filter out own orders to enable normal trading
-        open_orders = [o for o in orders if isinstance(o, dict) and not o.get('closed') and o.get('user_id') != user_id]
+        open_orders = [o for o in orders if isinstance(o, dict) and not o.get('closed')]
 
         for pair_id in self.pairs:
             pair_orders = [o for o in open_orders if o.get('pair_id') == pair_id]
@@ -157,17 +140,19 @@ class SmartBot:
 
     def execute_spread_trade(self, opportunity):
         pair_id = opportunity['pair_id']
-        my_buy_price = float(opportunity['best_buy']) + 0.01
-        my_sell_price = float(opportunity['best_sell']) - 0.01
+        # To take liquidity: buy at best_sell price to match existing sell orders
+        # and sell at best_buy price to match existing buy orders
+        take_buy_price = float(opportunity['best_sell'])
+        take_sell_price = float(opportunity['best_buy'])
         val_balance = float(self.get_balance_lot(self.target_lot_id))
-        quantity = (val_balance * 0.1) / my_buy_price
+        quantity = (val_balance * 0.1) / take_buy_price
 
-        print(f"\n--- MARKET MAKING ---")
+        print(f"\n--- MARKET TAKING ---")
         print(f"Спред рынка: {opportunity['best_buy']} <-> {opportunity['best_sell']}")
-        print(f"Мы ставим: BUY {my_buy_price} | SELL {my_sell_price}")
+        print(f"Покупаем по: {take_buy_price} | Продаем по: {take_sell_price}")
 
-        self.create_order(pair_id, 'buy', quantity, my_buy_price)
-        self.create_order(pair_id, 'sell', quantity, my_sell_price)
+        self.create_order(pair_id, 'buy', quantity, take_buy_price)
+        self.create_order(pair_id, 'sell', quantity, take_sell_price)
 
     def run(self):
         print("ЗАПУСК РОБОТА:  Умный робот торгаш")
