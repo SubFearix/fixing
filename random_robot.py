@@ -91,7 +91,7 @@ class RandomBot:
         for o in orders:
             if not isinstance(o, dict):
                 continue
-            if o.get('order.pair_id') == pair_id and not o.get('order.closed'):
+            if o.get('pair_id') == pair_id and not o.get('closed'):
                 pair_orders.append(o)
 
         if not pair_orders:

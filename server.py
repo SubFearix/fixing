@@ -16,11 +16,11 @@ exchange.initialize()
 def get_user_from_request():
     user_key = request.headers.get('X-USER-KEY')
     if not user_key:
-        return None, {"error": "Missing X-USER-KEY header"}
+        return None, {"error": "Missing X-USER-KEY header"}, 401
 
     user = exchange.get_user_by_key(user_key)
     if not user:
-        return None, {"error": "Invalid user key"}
+        return None, {"error": "Invalid user key"}, 401
 
     return user, None, None
 

@@ -39,8 +39,8 @@ class SmartBot:
         if response.status_code == 200:
             pairs_list = response.json()
             for pair in pairs_list:
-                first_lot = pair.get('first_lot_id') or pair.get('first_lot')
-                second_lot = pair.get('second_lot_id') or pair.get('second_lot')
+                first_lot = pair.get('sale_lot_id') or pair.get('first_lot_id') or pair.get('first_lot')
+                second_lot = pair.get('buy_lot_id') or pair.get('second_lot_id') or pair.get('second_lot')
                 self.pairs[pair['pair_id']] = {
                     'first_lot':  first_lot,
                     'second_lot': second_lot
@@ -188,7 +188,7 @@ class SmartBot:
                 time.sleep(self.check_interval)
         except KeyboardInterrupt:
             print("\n\nРобот остановлен пользователем")
-            final_val = float(self.get_balance_lot(self. target_lot_id))
+            final_val = float(self.get_balance_lot(self.target_lot_id))
             initial_val = float(next((b['quantity'] for b in self.initial_balance if b['lot_id'] == self.target_lot_id), 0))
             total_profit = final_val - initial_val
             total_profit_pct = (total_profit / initial_val * 100) if initial_val > 0 else 0
