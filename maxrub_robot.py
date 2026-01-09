@@ -16,6 +16,15 @@ class SmartBot:
         self.pairs = {}
         self.initial_balance = None
         self.trades_count = 0
+        self.user_id = None
+
+    def get_user_id(self):
+        if self.user_id is None:
+            response = requests.get(f'{self.api_url}/user/me', headers=self.headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.user_id = data.get('user_id')
+        return self.user_id
 
     def initialize(self):
         print("Инициализация робота...")
@@ -117,7 +126,10 @@ class SmartBot:
         print(f"DEBUG: Всего ордеров в базе: {len(orders)}. Пример ключей: {orders[0].keys() if orders else 'пусто'}")
         if not orders:
             return None
-        open_orders = [o for o in orders if isinstance(o, dict) and not o.get('closed')]
+        
+        user_id = self.get_user_id()
+        # Filter out own orders to enable normal trading
+        open_orders = [o for o in orders if isinstance(o, dict) and not o.get('closed') and o.get('user_id') != user_id]
 
         for pair_id in self.pairs:
             pair_orders = [o for o in open_orders if o.get('pair_id') == pair_id]

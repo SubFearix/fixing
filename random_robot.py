@@ -12,6 +12,15 @@ class RandomBot:
         self.spread_margin = spread_margin
         self.headers = {'X-USER-KEY': user_key, 'Content-Type': 'application/json'}
         self.order_count = 0
+        self.user_id = None
+
+    def get_user_id(self):
+        if self.user_id is None:
+            response = requests.get(f'{self.api_url}/user/me', headers=self.headers)
+            if response.status_code == 200:
+                data = response.json()
+                self.user_id = data.get('user_id')
+        return self.user_id
 
     def get_balance(self):
         response = requests.get(f'{self.api_url}/balance', headers=self.headers)
@@ -87,9 +96,13 @@ class RandomBot:
         if not orders:
             return None, None
 
+        user_id = self.get_user_id()
         pair_orders = []
         for o in orders:
             if not isinstance(o, dict):
+                continue
+            # Filter out own orders to avoid self-trading
+            if o.get('user_id') == user_id:
                 continue
             if o.get('pair_id') == pair_id and not o.get('closed'):
                 pair_orders.append(o)
