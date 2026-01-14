@@ -4,7 +4,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Установка зависимостей Python
-RUN pip install --no-cache-dir flask
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org flask
 
 # Копирование файлов приложения
 COPY server.py .
