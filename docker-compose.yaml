@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # База данных (практики 1-2)
   exchange-db1:
