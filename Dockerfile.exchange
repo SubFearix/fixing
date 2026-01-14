@@ -4,6 +4,8 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Установка зависимостей Python
+# Note: --trusted-host flags are used to bypass SSL verification in development environment
+# In production, use a requirements.txt with pinned versions and proper SSL certificates
 RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host files.pythonhosted.org flask
 
 # Копирование файлов приложения
@@ -16,4 +18,5 @@ COPY config.docker.json ./config.json
 EXPOSE 5000
 
 # Запуск приложения
+# Note: For production deployment, consider using a production WSGI server like gunicorn
 CMD ["python", "server.py"]
