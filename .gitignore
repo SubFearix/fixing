@@ -104,3 +104,10 @@ venv.bak/
 .vscode/
 *.swp
 *.swo
+
+# Database files
+exchange_db/
+*.csv
+
+# Docker volumes
+volumes/

@@ -1,0 +1,87 @@
+services:
+  # База данных (практики 1-2)
+  exchange-db1:
+    build:
+      context: .
+      dockerfile: Dockerfile.database
+    container_name: exchange-db1
+    hostname: exchange-db1
+    ports:
+      - "7432:7432"
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+  # Экземпляр 1 биржи
+  srv1.exchange:
+    build:
+      context: .
+      dockerfile: Dockerfile.exchange
+    container_name: srv1.exchange
+    hostname: srv1.exchange
+    depends_on:
+      - exchange-db1
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+  # Экземпляр 2 биржи
+  srv2.exchange:
+    build:
+      context: .
+      dockerfile: Dockerfile.exchange
+    container_name: srv2.exchange
+    hostname: srv2.exchange
+    depends_on:
+      - exchange-db1
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+  # Экземпляр 3 биржи
+  srv3.exchange:
+    build:
+      context: .
+      dockerfile: Dockerfile.exchange
+    container_name: srv3.exchange
+    hostname: srv3.exchange
+    depends_on:
+      - exchange-db1
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+  # Экземпляр 4 биржи
+  srv4.exchange:
+    build:
+      context: .
+      dockerfile: Dockerfile.exchange
+    container_name: srv4.exchange
+    hostname: srv4.exchange
+    depends_on:
+      - exchange-db1
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+  # Nginx reverse proxy с балансировкой по ip-hash
+  proxy1.endpoint:
+    image: nginx:alpine
+    container_name: proxy1.endpoint
+    hostname: proxy1.endpoint
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - srv1.exchange
+      - srv2.exchange
+      - srv3.exchange
+      - srv4.exchange
+    networks:
+      - exchange-network
+    restart: unless-stopped
+
+networks:
+  exchange-network:
+    driver: bridge
