@@ -1,0 +1,11 @@
+{
+    "name": "exchange_db",
+    "tuples_limit": 5000,
+    "structure": {
+        "lot": ["name"],
+        "pair": ["first_lot_id", "second_lot_id"],
+        "user": ["username", "key"],
+        "user_lot": ["user_id", "lot_id", "quantity"],
+        "order": ["user_id", "pair_id", "quantity", "price", "type", "closed"]
+    }
+}

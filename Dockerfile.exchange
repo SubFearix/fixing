@@ -1,0 +1,19 @@
+FROM python:3.11-slim
+
+# Создание рабочей директории
+WORKDIR /app
+
+# Установка зависимостей Python
+RUN pip install --no-cache-dir flask
+
+# Копирование файлов приложения
+COPY server.py .
+COPY database_client.py .
+COPY models.py .
+COPY config.docker.json ./config.json
+
+# Экспонирование порта
+EXPOSE 5000
+
+# Запуск приложения
+CMD ["python", "server.py"]

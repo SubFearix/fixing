@@ -1,0 +1,29 @@
+FROM ubuntu:22.04
+
+# Установка необходимых пакетов
+RUN apt-get update && apt-get install -y \
+    g++ \
+    make \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание рабочей директории
+WORKDIR /app
+
+# Копирование исходных кодов
+COPY main.cpp .
+COPY server.cpp .
+COPY server.h .
+COPY database/ ./database/
+COPY schema.json .
+
+# Компиляция приложения
+RUN g++ -std=c++17 -pthread -o database_server main.cpp server.cpp \
+    database/database.cpp database/table.cpp database/parsing.cpp \
+    database/filework.cpp database/hashchain.cpp \
+    -I./database/include
+
+# Экспонирование порта
+EXPOSE 7432
+
+# Запуск приложения
+CMD ["./database_server"]
